@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 class Ellipsoid : public Object {
 public:
     Ellipsoid(vec3f r) : radius(r) {};

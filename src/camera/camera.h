@@ -4,6 +4,7 @@
 #include "objects/ray.h"
 
 #include <memory>
+#include <cmath>
 
 class Camera {
 public:
