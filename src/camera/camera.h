@@ -1,0 +1,20 @@
+#pragma once
+
+#include "utils/vec.h"
+#include "objects/ray.h"
+
+#include <memory>
+
+class Camera {
+public:
+    Camera() {}
+
+    Ray cast_in_pixel(vec2i position);
+
+    size_t width, height;
+
+    vec3f position;
+    vec3f right, up, forward;
+
+    vec2f fov_in_radians;
+};
