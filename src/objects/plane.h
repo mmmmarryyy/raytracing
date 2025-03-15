@@ -6,7 +6,7 @@ class Plane : public Object {
 public:
     Plane(vec3f n) : normal(n) {};
 
-    std::optional<float> is_intersected_by_ray(Ray start_ray) override {
+    std::optional<Intersection> is_intersected_by_ray(Ray start_ray) override {
         Ray ray = start_ray.shift_and_rotate_ray(position, rotation);
 
         float t = - dot(ray.start_position, normal) / dot(ray.direction, normal);
@@ -15,7 +15,17 @@ public:
             return std::nullopt;
         }
 
-        return std::make_optional(t);
+        Intersection intersection;
+
+        intersection.color = color;
+        intersection.normal = rotate(normal, rotation);
+        intersection.distance = t;
+        if (dot(ray.direction, normal) > 0) {
+            intersection.inside_flag = true;
+            intersection.normal = -intersection.normal;
+        }
+
+        return std::make_optional(intersection);
     };
 
     vec3f normal;

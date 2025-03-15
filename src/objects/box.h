@@ -6,7 +6,7 @@ class Box : public Object {
 public:
     Box(vec3f s): size(s) {};
 
-    std::optional<float> is_intersected_by_ray(Ray start_ray) override {
+    std::optional<Intersection> is_intersected_by_ray(Ray start_ray) override {
         Ray ray = start_ray.shift_and_rotate_ray(position, rotation);
 
         vec3f t1{};
@@ -38,11 +38,39 @@ public:
             return std::nullopt;
         }
 
+        Intersection intersection;
+        intersection.distance = t1_max;
+        intersection.color = color;
         if (t1_max < 0) {
-            t1_max = t2_min;
+            intersection.inside_flag = true;
+            intersection.distance = t2_min;
         }
 
-        return std::make_optional(t1_max);
+        intersection.normal = (ray.start_position + intersection.distance * ray.direction) / size;
+
+        float max_distance = 0.0;
+        int max_index = 0;
+        if (std::abs(intersection.normal.x) >= max_distance) {
+            max_distance = std::abs(intersection.normal.x);
+            max_index = 0;
+        }
+        if (std::abs(intersection.normal.y) >= max_distance) {
+            max_distance = std::abs(intersection.normal.y);
+            max_index = 1;
+        }
+        if (std::abs(intersection.normal.z) >= max_distance) {
+            max_distance = std::abs(intersection.normal.z);
+            max_index = 2;
+        }
+
+        intersection.normal.x = (0 == max_index) ? (intersection.normal.x > 0.0 ? 1.0 : -1.0) : 0.0;
+        intersection.normal.y = (1 == max_index) ? (intersection.normal.y > 0.0 ? 1.0 : -1.0) : 0.0;
+        intersection.normal.z = (2 == max_index) ? (intersection.normal.z > 0.0 ? 1.0 : -1.0) : 0.0;
+        normal(intersection.normal);
+
+        intersection.normal = rotate(intersection.inside_flag ? -intersection.normal : intersection.normal, rotation);
+
+        return std::make_optional(intersection);
     };
 
     vec3f size;

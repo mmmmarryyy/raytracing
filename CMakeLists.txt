@@ -20,10 +20,13 @@ add_executable(${PROJECT_NAME}
     src/utils/parse.cpp
     src/utils/common_commands.h
     src/utils/object_commands.h
+    src/utils/light_commands.h
+    src/objects/intersection.h
     src/objects/ray.h
     src/objects/box.h
     src/objects/ellipsoid.h
     src/objects/object.h
+    src/objects/light_source.h
     src/objects/plane.h
     src/scene/scene.h
     src/scene/scene.cpp)

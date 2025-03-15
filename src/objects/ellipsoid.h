@@ -6,7 +6,7 @@ class Ellipsoid : public Object {
 public:
     Ellipsoid(vec3f r) : radius(r) {};
 
-    std::optional<float> is_intersected_by_ray(Ray start_ray) override {
+    std::optional<Intersection> is_intersected_by_ray(Ray start_ray) override {
         Ray ray = start_ray.shift_and_rotate_ray(position, rotation);
 
         vec3f o_div_radius = ray.start_position / radius;
@@ -30,10 +30,19 @@ public:
             return std::nullopt;
         }
 
+        Intersection intersection;
+        intersection.color = color;
+        intersection.distance = t1;
+
         if (t1 < 0) {
-            t1 = t2;
+            intersection.inside_flag = true;
+            intersection.distance = t2;
         }
-        return std::make_optional(t1);
+
+        intersection.normal = get_normal_form((ray.start_position + intersection.distance * ray.direction) / (radius * radius));
+        intersection.normal = rotate(intersection.inside_flag ? -intersection.normal : intersection.normal, rotation);
+
+        return std::make_optional(intersection);
     };
 
     vec3f radius;

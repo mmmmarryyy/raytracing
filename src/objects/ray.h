@@ -23,4 +23,6 @@ public:
 
     vec3f start_position;
     vec3f direction;
+
+    int depth = 1;
 };
