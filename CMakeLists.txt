@@ -12,6 +12,8 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/camera/camera.h
     src/camera/camera.cpp
+    src/utils/random.h
+    src/utils/random.cpp
     src/utils/vec.h
     src/utils/vec.cpp
     src/utils/color.h
@@ -29,4 +31,5 @@ add_executable(${PROJECT_NAME}
     src/objects/light_source.h
     src/objects/plane.h
     src/scene/scene.h
-    src/scene/scene.cpp)
+    src/scene/scene.cpp
+)

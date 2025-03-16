@@ -14,6 +14,7 @@ public:
     vec3f position = {0.0, 0.0, 0.0};
     vec3f color = {0.0, 0.0, 0.0};
     vec4f rotation = {0.0, 0.0, 0.0, 1.0};
+    vec3f emission = {0.0, 0.0, 0.0};
 
     enum Material {
         Diffuse,
@@ -48,6 +49,8 @@ public:
             material = Dielectric;
         } else if (command == object_commands_names[IOR]) {
             ior = get_float_from_string(line, space_position + 1);
+        } else if (command == object_commands_names[EMISSION]) {
+            emission = get_vec3f_from_string(line, space_position + 1);
         } 
         // USE THIS COMMENTED BLOCK TO DEBUG; FORBIDDEN TO DELETE
         // else {

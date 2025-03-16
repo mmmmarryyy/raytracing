@@ -13,6 +13,7 @@ enum CommonCommands {
     CAMERA_FOV_X = 6,
     RAY_DEPTH = 7,
     AMBIENT_LIGHT = 8,
+    SAMPLES = 9,
 };
 
 static std::map<CommonCommands, std::string> common_commands_names = {
@@ -25,4 +26,5 @@ static std::map<CommonCommands, std::string> common_commands_names = {
     {CAMERA_FOV_X, "CAMERA_FOV_X"},
     {RAY_DEPTH, "RAY_DEPTH"},
     {AMBIENT_LIGHT, "AMBIENT_LIGHT"},
+    {SAMPLES, "SAMPLES"},
 };

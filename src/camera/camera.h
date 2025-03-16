@@ -10,7 +10,7 @@ class Camera {
 public:
     Camera() {}
 
-    Ray cast_in_pixel(vec2i position);
+    Ray cast_in_pixel(vec2i position, vec2f random_offset = {});
 
     size_t width, height;
 

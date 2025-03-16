@@ -5,6 +5,7 @@
 #include "objects/ellipsoid.h"
 #include "objects/plane.h"
 #include "objects/light_source.h"
+#include "utils/random.h"
 #include "utils/color.h"
 #include "utils/vec.h"
 #include "utils/common_commands.h"
@@ -31,7 +32,8 @@ public:
     std::vector<std::shared_ptr<LightSource>> lights;
     std::vector<vec3ui> image;
     int ray_depth = 1;
-    vec3f ambient{0.0, 0.0, 0.0};
+    int samples = 16;
+    vec3f ambient = {0.0, 0.0, 0.0};
 
 private:
     const float gamma = 1.0 / 2.2;

@@ -14,6 +14,7 @@ enum ObjectCommands {
     METALLIC = 7,
     DIELECTRIC = 8,
     IOR = 9,
+    EMISSION = 10,
 };
 
 static std::map<ObjectCommands, std::string> object_commands_names = {
@@ -27,4 +28,5 @@ static std::map<ObjectCommands, std::string> object_commands_names = {
     {METALLIC, "METALLIC"},
     {DIELECTRIC, "DIELECTRIC"},
     {IOR, "IOR"},
+    {EMISSION, "EMISSION"},
 };
