@@ -4,22 +4,14 @@
 
 class Box : public Object {
 public:
-    Box(vec3f s): size(s) {};
+    Box(glm::vec3 s): size(s) {};
 
     std::optional<Intersection> is_intersected_by_ray(Ray start_ray) override {
-        Ray ray = start_ray.shift_and_rotate_ray(position, rotation);
-
-        vec3f t1{};
-        vec3f t2{};
-
-        t1.x = (-size.x - ray.start_position.x) / ray.direction.x;
-        t2.x = (size.x - ray.start_position.x) / ray.direction.x;
-
-        t1.y = (-size.y - ray.start_position.y) / ray.direction.y;
-        t2.y = (size.y - ray.start_position.y) / ray.direction.y;
-
-        t1.z = (-size.z - ray.start_position.z) / ray.direction.z;
-        t2.z = (size.z - ray.start_position.z) / ray.direction.z;
+        Ray ray = start_ray.shift_and_rotate_ray(position, inversed_rotation);
+        ray.depth = start_ray.depth;
+        
+        glm::vec3 t1 = (-size - ray.start_position) / ray.direction;
+        glm::vec3 t2 = (size - ray.start_position) / ray.direction;
         
         if (t1.x > t2.x) {
             std::swap(t1.x, t2.x);
@@ -37,41 +29,32 @@ public:
         if (t1_max > t2_min || t2_min < 0) {
             return std::nullopt;
         }
-
+    
         Intersection intersection;
         intersection.distance = t1_max;
-        intersection.color = color;
         if (t1_max < 0) {
-            intersection.inside_flag = true;
             intersection.distance = t2_min;
         }
 
-        intersection.normal = (ray.start_position + intersection.distance * ray.direction) / size;
-
-        float max_distance = 0.0;
-        int max_index = 0;
-        if (std::abs(intersection.normal.x) >= max_distance) {
-            max_distance = std::abs(intersection.normal.x);
-            max_index = 0;
-        }
-        if (std::abs(intersection.normal.y) >= max_distance) {
-            max_distance = std::abs(intersection.normal.y);
-            max_index = 1;
-        }
-        if (std::abs(intersection.normal.z) >= max_distance) {
-            max_distance = std::abs(intersection.normal.z);
-            max_index = 2;
+        glm::vec3 intersection_normal = (ray.start_position + intersection.distance * ray.direction) / size;
+        
+        for (std::size_t i = 0; i < 3; i++) {
+            if (std::abs(std::abs(intersection_normal[i]) - 1.0) < 1e-5) {
+                intersection_normal[i] = (intersection_normal[i] > 0.0) ? 1.0 : -1.0;
+            } else {
+                intersection_normal[i] = 0;
+            }
         }
 
-        intersection.normal.x = (0 == max_index) ? (intersection.normal.x > 0.0 ? 1.0 : -1.0) : 0.0;
-        intersection.normal.y = (1 == max_index) ? (intersection.normal.y > 0.0 ? 1.0 : -1.0) : 0.0;
-        intersection.normal.z = (2 == max_index) ? (intersection.normal.z > 0.0 ? 1.0 : -1.0) : 0.0;
-        normal(intersection.normal);
+        intersection.inside_flag = glm::dot(intersection_normal, ray.direction) > 0;
+        if (intersection.inside_flag) {
+            intersection_normal = -intersection_normal;
+        }
 
-        intersection.normal = rotate(intersection.inside_flag ? -intersection.normal : intersection.normal, rotation);
-
+        my_rotate(rotation, intersection_normal);
+        intersection.normal = intersection_normal;
         return std::make_optional(intersection);
     };
 
-    vec3f size;
+    glm::vec3 size;
 };

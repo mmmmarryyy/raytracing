@@ -1,28 +1,31 @@
 #pragma once
 
-#include "utils/vec.h"
+#include "gtc/quaternion.hpp"
 
 class Ray {
-public:
-    Ray(vec3f position, vec3f d) : start_position(position), direction(d) {
-        normal(direction);
-    }
+public: 
+    Ray(glm::vec3 position, glm::vec3 d) : start_position(position), direction(d) {}
 
-    Ray shift_and_rotate_ray(vec3f position, vec4f rotation) {
+    Ray shift_and_rotate_ray(glm::vec3 position, glm::quat inversed_rotation) {
         Ray ray = Ray(start_position, direction);
 
         ray.start_position.x -= position.x;
         ray.start_position.y -= position.y;
         ray.start_position.z -= position.z;
 
-        ray.start_position = rotate(ray.start_position, -rotation);
-        ray.direction = rotate(ray.direction, -rotation);
+        my_rotate(inversed_rotation, ray.start_position);
+        my_rotate(inversed_rotation, ray.direction);
 
         return ray;
     }
 
-    vec3f start_position;
-    vec3f direction;
+    glm::vec3 start_position;
+    glm::vec3 direction;
+    int depth = 0;
 
-    int depth = 1;
+private:
+    void my_rotate(glm::quat q, glm::vec3 &v) {
+        glm::vec3 t = 2.f * glm::cross({q[1], q[2], q[3]}, v);
+        v = v + q[0] * t + cross({q[1], q[2], q[3]}, t);
+    }
 };

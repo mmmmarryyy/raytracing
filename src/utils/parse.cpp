@@ -14,8 +14,8 @@ float get_float_from_string(std::string str, size_t position, size_t *index) {
     );
 }
 
-vec2i get_vec2i_from_string(std::string str, size_t position) {
-    vec2i result{};
+glm::ivec2 get_vec2i_from_string(std::string str, size_t position) {
+    glm::ivec2 result{};
 
     size_t new_position;
     result.x = get_int_from_string(str, position, &new_position);
@@ -25,8 +25,8 @@ vec2i get_vec2i_from_string(std::string str, size_t position) {
     return result;
 }
 
-vec3f get_vec3f_from_string(std::string str, size_t position) {
-    vec3f result{};
+glm::vec3 get_vec3f_from_string(std::string str, size_t position) {
+    glm::vec3 result{};
 
     size_t new_position;
     result.x = get_float_from_string(str, position, &new_position);
@@ -39,8 +39,8 @@ vec3f get_vec3f_from_string(std::string str, size_t position) {
     return result;
 }
 
-vec4f get_vec4f_from_string(std::string str, size_t position) {
-    vec4f result{};
+glm::quat get_vec4f_from_string(std::string str, size_t position) {
+    glm::quat result;
 
     size_t new_position;
     result.x = get_float_from_string(str, position, &new_position);

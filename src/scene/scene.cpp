@@ -27,7 +27,7 @@ void Scene::parse() {
         if (command == common_commands_names[DIMENSIONS]) {
             stages[DIMENSIONS] = true;
 
-            vec2i dimensions = get_vec2i_from_string(line, space_position + 1);
+            glm::ivec2 dimensions = get_vec2i_from_string(line, space_position + 1);
             camera->width = dimensions.x;
             camera->height = dimensions.y;
             initiate_image();
@@ -42,20 +42,20 @@ void Scene::parse() {
         } else if (command == common_commands_names[CAMERA_RIGHT]) {
             stages[CAMERA_RIGHT] = true;
 
-            camera->right = get_normal_form(get_vec3f_from_string(line, space_position + 1));
+            camera->right = get_vec3f_from_string(line, space_position + 1);
         } else if (command == common_commands_names[CAMERA_UP]) {
             stages[CAMERA_UP] = true;
 
-            camera->up = get_normal_form(get_vec3f_from_string(line, space_position + 1));
+            camera->up = get_vec3f_from_string(line, space_position + 1);
         } else if (command == common_commands_names[CAMERA_FORWARD]) {
             stages[CAMERA_FORWARD] = true;
 
-            camera->forward = get_normal_form(get_vec3f_from_string(line, space_position + 1));
+            camera->forward = get_vec3f_from_string(line, space_position + 1);
         } else if (command == common_commands_names[CAMERA_FOV_X]) {
             stages[CAMERA_FOV_X] = true;
             
             float fov_x = get_float_from_string(line, space_position + 1);
-            camera->fov_in_radians = {fov_x, 0};
+            camera->fov_in_radians = {(float)std::tan(fov_x / 2.0), 0};
         } else if (command == common_commands_names[RAY_DEPTH]) {
             stages[RAY_DEPTH] = true;
 
@@ -82,7 +82,7 @@ void Scene::parse() {
                 if (command == object_commands_names[PLANE]) {
                     objects.emplace_back(
                         new Plane(
-                            get_normal_form(get_vec3f_from_string(line, space_position + 1))
+                            get_vec3f_from_string(line, space_position + 1)
                         )
                     );
                 } else if (command == object_commands_names[ELLIPSOID]) {
@@ -104,64 +104,51 @@ void Scene::parse() {
                 std::cout << "DEBUG: Can't find line after NEW_PRIMITIVE command" << std::endl;
             }
         } else {
-            if (!objects.empty() && !lights.empty()) {
+            if (!objects.empty()) {
                 objects.back()->parse(line);
-                lights.back()->parse(line);
-            } else if (!objects.empty()) {
-                objects.back()->parse(line);
-            } else if (!lights.empty()) {
-                lights.back()->parse(line);
             } else {
                 std::cout << "DEBUG: Find unknown command = " << command << " while parsing input file" << std::endl;
             }
         }
     }
 
-    camera->fov_in_radians.y = 2.0 * std::atan(std::tan(camera->fov_in_radians.x * 0.5) * (float)camera->height / (float)camera->width);
+    camera->fov_in_radians.y = camera->fov_in_radians.x * (float)camera->height / (float)camera->width;
 
     std::cout << "DEBUG: End of parse scene; number of objects = " << objects.size() << std::endl;
 }
 
 static std::minstd_rand random_generator = get_random_generator();
+std::uniform_real_distribution<float> random_float_distribution;
 
 void Scene::render() {
     // TODO: think about adding parallelism in this function
-    std::uniform_real_distribution<float> offset_distribution(-0.5, 0.5);
-    std::vector<vec3f> image(camera->height * camera->width, {0.0, 0.0, 0.0});
-
-    for (int s = 0; s < samples; ++s) {
-        std::cout << "DEBUG: s = " << s << std::endl;
-        for (int j = 0; j < camera->height; ++j) {
-            for (int i = 0; i < camera->width; ++i) {
+    for (int j = 0; j < camera->height; ++j) {
+        std::cout << "j = " << j << std::endl;
+        for (int i = 0; i < camera->width; ++i) {
+            glm::vec2 pixel_position = {i, j};
+            glm::vec3 pixel_color = {0.0, 0.0, 0.0};
+            for (int i = 0; i < samples; i++) {
                 Ray ray = camera->cast_in_pixel(
+                    pixel_position, 
                     {
-                        i, 
-                        j
-                    }, 
-                    {
-                        offset_distribution(random_generator), 
-                        offset_distribution(random_generator)
+                        random_float_distribution(random_generator),
+                        random_float_distribution(random_generator)
                     }
                 );
                 ray.depth = ray_depth;
 
-                vec3f sample_color = bg_color;
-                std::optional<Intersection> intersection = find_intersection(ray);
-                if (intersection.has_value()) {
-                    sample_color = intersection->color;
-                }
-
-                image[j * camera->width + i] += sample_color;
+                pixel_color += get_color(ray);
             }
-        }
-    }
 
-    for (int j = 0; j < camera->height; ++j) {
-        for (int i = 0; i < camera->width; ++i) {
-            vec3f color = image[j * camera->width + i] * (1.0 / samples);
-            vec3ui new_color = normal_to_rgb(pow(aces_tonemap(color), gamma));
+            pixel_color *= (1.0 / static_cast<float>(samples)); 
 
-            set_pixel({i, j}, new_color);
+            pixel_color = aces_tonemap(pixel_color);
+            for (std::size_t i = 0; i < 3; i++) {
+                pixel_color[i] = std::pow(pixel_color[i], gamma);
+            }
+            glm::vec3 new_color = normal_to_rgb(pixel_color);
+
+            set_pixel(pixel_position, new_color);
         }
     }
 }
@@ -176,25 +163,15 @@ void Scene::draw_to_file(std::string filename) {
     out << "P6" << std::endl << camera->width << " " << camera->height << std::endl << "255" << std::endl;
 
     char *data_char = (char *)(void *)image.data();
-    out.write(data_char, image.size() * sizeof(vec3ui));
+    out.write(data_char, image.size() * 3);
     out.close();
 }
 
-std::optional<Intersection> Scene::find_intersection(Ray ray, float max_distance, bool no_light_flag) {
-    if (ray.depth <= 0) {
-        return std::nullopt;
-    }
-
-    ray.depth -= 1;
-
+std::optional<Intersection> Scene::find_intersection(Ray& ray, float max_distance) {
     Intersection intersection {
         .distance = max_distance,
-        .color = {0.0, 0.0, 0.0},
-        .inside_flag = false,
+        .intersected_object_index = -1
     };
-
-    bool intersection_flag = false;
-    int intersected_object_index = -1;
 
     for (int i = 0; i < objects.size(); ++i) {
         std::optional<Intersection> object_intersection = objects[i]->is_intersected_by_ray(ray);
@@ -206,155 +183,90 @@ std::optional<Intersection> Scene::find_intersection(Ray ray, float max_distance
             continue;
         }
 
-        intersected_object_index = i;
-        intersection_flag = true;
         intersection = object_intersection.value();
-        intersection.color = objects[i]->emission;
+        intersection.intersected_object_index = i;
     }
 
-    if (no_light_flag || intersected_object_index < 0) {
+    if (intersection.intersected_object_index < 0) {
         return std::nullopt;
+    } else {
+        return std::make_optional(intersection);
+    }
+}
+
+glm::vec3 Scene::get_reflected_color(glm::vec3 &position, glm::vec3 &normal, Ray &ray) {
+    Ray reflected_ray(position, ray.direction - 2.0f * normal * glm::dot(normal, ray.direction));
+    reflected_ray.depth = ray.depth - 1;
+    return get_color(reflected_ray);
+}
+
+glm::vec3 Scene::get_color(Ray& ray) {
+    if (ray.depth <= 0) {
+        return glm::vec3(0.0);
     }
 
-    vec3f position = ray.start_position + ray.direction * intersection.distance;
+    std::optional<Intersection> intersection = find_intersection(ray);
+    if (!intersection.has_value()) {
+        return bg_color;
+    }
 
-    switch(objects[intersected_object_index]->material) {
+    switch(objects[intersection->intersected_object_index]->material) {
         case Object::Diffuse: {
-            vec3f direction = get_random_direction(random_generator);
-            if (dot(direction, intersection.normal) < 0) {
-                direction = -direction;
-            }
+            glm::vec3 direction = get_random_direction(random_generator, intersection->normal);
+            glm::vec3 position = ray.start_position + ray.direction * intersection->distance + shift * intersection->normal;
             
-            Ray reflected_ray(position + direction * shift, direction);
-            reflected_ray.depth = ray.depth;
-            
-            std::optional<Intersection> reflectected_intersection = find_intersection(reflected_ray, max_distance);
-            vec3f reflected_color = reflectected_intersection.has_value() ? reflectected_intersection->color : bg_color;
-            
-            intersection.color += reflected_color * objects[intersected_object_index]->color * 2 * dot(direction, intersection.normal);
-            break;
+            Ray reflected_ray(position, direction);
+            reflected_ray.depth = ray.depth - 1;
+            return objects[intersection->intersected_object_index]->emission + get_color(reflected_ray) * objects[intersection->intersected_object_index]->color * 2.0f * glm::dot(direction, intersection->normal);
         }
         case Object::Dielectric: {
-            float cos_theta_1 = -dot(intersection.normal, ray.direction);
+            float cos_theta_1 = -glm::dot(intersection->normal, ray.direction);
             float eta_1 = 1.0; // air
-            float eta_2 = objects[intersected_object_index]->ior;
+            float eta_2 = objects[intersection->intersected_object_index]->ior;
 
-            if (intersection.inside_flag) {
+            if (intersection->inside_flag) {
                 std::swap(eta_1, eta_2);
             }
 
             float sin_theta_2 = eta_1 / eta_2 * std::sqrt(1 - cos_theta_1 * cos_theta_1);
 
-            float reflection_coefficient;
-            float direction;
-
             if (sin_theta_2 >= 1.0) {
-                reflection_coefficient = 1.0;
-                direction = 0;
-            } else {
-                float r0 = std::pow((eta_1 - eta_2) / (eta_1 + eta_2), 2.0);
-                reflection_coefficient = r0 + (1 - r0) * std::pow(1 - cos_theta_1, 5.0);
-                std::uniform_real_distribution<float> ray_direction_distribution(0.0, 1.0);
-                direction = ray_direction_distribution(random_generator);
-            }
-
-            if (direction < reflection_coefficient) {
-                vec3f reflected_direction = get_normal_form(
-                    ray.direction - 2 * intersection.normal * dot(
-                        intersection.normal, 
-                        ray.direction
-                    )
+                glm::vec3 reflected_direction = ray.direction - 2.0f * intersection->normal * glm::dot(
+                    intersection->normal, 
+                    ray.direction
                 );
-                Ray reflected_ray(position + reflected_direction * shift, reflected_direction);
-                reflected_ray.depth = ray.depth;
+                glm::vec3 position = ray.start_position + ray.direction * intersection->distance + shift * reflected_direction;
+                return get_reflected_color(position, intersection->normal, ray);
+            } 
+            
+            float r0 = std::pow((eta_1 - eta_2) / (eta_1 + eta_2), 2.0);
+            float reflection_coefficient = r0 + (1 - r0) * std::pow(1 - cos_theta_1, 5.0);
+            float cos_theta_2 = std::sqrt(1 - sin_theta_2 * sin_theta_2);
+            glm::vec3 refracted_direction = (eta_1 / eta_2) * ray.direction + 
+                    ((eta_1 / eta_2) * cos_theta_1 - cos_theta_2) * intersection->normal;
 
-                std::optional<Intersection> reflected_intersection = find_intersection(reflected_ray, max_distance);
-                vec3f reflected_color{};
-                if (!reflected_intersection.has_value()) {
-                    reflected_color = bg_color;
-                } else {
-                    reflected_color = reflected_intersection->color;
-                }
-                intersection.color += reflected_color;
-            } else {
-                float cos_theta_2 = std::sqrt(1 - sin_theta_2 * sin_theta_2);
-
-                vec3f refracted_direction = get_normal_form(
-                    (eta_1 / eta_2) * ray.direction + 
-                    ((eta_1 / eta_2) * cos_theta_1 - cos_theta_2) * intersection.normal
+            if (random_float_distribution(random_generator) < reflection_coefficient) {
+                glm::vec3 reflected_direction = ray.direction - 2.0f * intersection->normal * glm::dot(
+                    intersection->normal, 
+                    ray.direction
                 );
-                Ray refracted_ray(position + refracted_direction * shift, refracted_direction);
-                refracted_ray.depth = ray.depth;
-                
-                std::optional<Intersection> refracted_intersection = find_intersection(refracted_ray, max_distance);
-
-                vec3f refracted_color{};
-                if (!refracted_intersection.has_value()) {
-                    refracted_color = bg_color;
-                } else {
-                    refracted_color = refracted_intersection->color;
-                    if (!intersection.inside_flag) {
-                        refracted_color *= objects[intersected_object_index]->color;
-                    }
-                }
-                intersection.color += refracted_color;
+                glm::vec3 position = ray.start_position + ray.direction * intersection->distance + shift * reflected_direction;
+                return get_reflected_color(position, intersection->normal, ray);
             }
-            break;
+            Ray refracted_ray(ray.start_position + ray.direction * intersection->distance - shift * intersection->normal, refracted_direction);
+            refracted_ray.depth = ray.depth - 1;
+            glm::vec3 refracted_color = get_color(refracted_ray);
+
+            if (!intersection->inside_flag && refracted_color != bg_color) {
+                refracted_color *= objects[intersection->intersected_object_index]->color;
+            }
+            return refracted_color;
         }
         case Object::Metallic: {
-            vec3f direction = get_normal_form(
-                ray.direction - 2 * intersection.normal * dot(
-                    intersection.normal, 
-                    ray.direction
-                )
-            );
-            Ray reflected_ray(position + direction * shift, direction);
-            reflected_ray.depth = ray.depth;
-
-            std::optional<Intersection> reflected_inersection = find_intersection(reflected_ray, max_distance);
-            if (!reflected_inersection.has_value()) {
-                intersection.color += objects[intersected_object_index]->color * bg_color;
-            } else {
-                intersection.color += objects[intersected_object_index]->color * reflected_inersection->color;
-            }
-            break;
+            glm::vec3 position = ray.start_position + ray.direction * intersection->distance + intersection->normal * shift;
+            return objects[intersection->intersected_object_index]->emission + 
+                objects[intersection->intersected_object_index]->color * 
+                get_reflected_color(position, intersection->normal, ray);
         }
-    }
-
-        // for (const auto& light : lights) {
-        //     vec3f direction;
-        //     float light_distance = max_distance;
-
-        //     if (light->light_type == LightSource::Directional) {
-        //         direction = light->direction;
-        //     } else {
-        //         direction = light->position - position;
-        //         light_distance = length(direction);
-        //         normal(direction);
-        //     }
-
-        //     Ray light_ray(position + direction * shift, direction);
-
-        //     std::optional<Intersection> light_intersection = find_intersection(light_ray, light_distance, true);
-        //     if (light_intersection.has_value()) {
-        //         continue;
-        //     }
-
-        //     vec3f light_color = light->intensity;
-        //     if (light->light_type == LightSource::Positional) {
-        //         light_color *= (1.0 / (light->attenuation.x
-        //             + light->attenuation.y * light_distance
-        //             + light->attenuation.z * light_distance * light_distance)
-        //         );
-        //     }
-
-        //     light_color *= std::max(dot(direction, object_intersection->normal), (float)0.0);
-        //     intersection.color += object->color * light_color;
-        // }
-
-    if (intersection_flag) {
-        return std::make_optional(intersection);
-    } else {
-        return std::nullopt;
     }
 }

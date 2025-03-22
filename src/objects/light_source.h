@@ -4,7 +4,6 @@
 #include <string>
 #include <iostream>
 
-#include "utils/vec.h"
 #include "utils/light_commands.h"
 #include "utils/parse.h"
 
@@ -15,10 +14,10 @@ public:
         Positional
     };
 
-    vec3f intensity = {0.0, 0.0, 0.0};
-    vec3f direction = {0.0, 0.0, 0.0};
-    vec3f position = {0.0, 0.0, 0.0};
-    vec3f attenuation = {0.0, 0.0, 0.0};
+    glm::vec3 intensity = {0.0, 0.0, 0.0};
+    glm::vec3 direction = {0.0, 0.0, 0.0};
+    glm::vec3 position = {0.0, 0.0, 0.0};
+    glm::vec3 attenuation = {0.0, 0.0, 0.0};
 
     LightType light_type;
 
@@ -34,7 +33,7 @@ public:
             intensity = get_vec3f_from_string(line, space_position + 1);
         } else if (command == light_commands_names[LIGHT_DIRECTION]) {
             light_type = Directional;
-            direction = get_normal_form(get_vec3f_from_string(line, space_position + 1));
+            direction = get_vec3f_from_string(line, space_position + 1);
         } else if (command == light_commands_names[LIGHT_POSITION]) {
             light_type = Positional;
             position = get_vec3f_from_string(line, space_position + 1);

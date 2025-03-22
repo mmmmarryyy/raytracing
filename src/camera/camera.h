@@ -1,7 +1,8 @@
 #pragma once
 
-#include "utils/vec.h"
 #include "objects/ray.h"
+#include "utils/random.h"
+#include "glm.hpp"
 
 #include <memory>
 #include <cmath>
@@ -10,12 +11,12 @@ class Camera {
 public:
     Camera() {}
 
-    Ray cast_in_pixel(vec2i position, vec2f random_offset = {});
+    Ray cast_in_pixel(glm::vec2 p, glm::vec2 random_offset);
 
     size_t width, height;
 
-    vec3f position;
-    vec3f right, up, forward;
+    glm::vec3 position;
+    glm::vec3 right, up, forward;
 
-    vec2f fov_in_radians;
+    glm::vec2 fov_in_radians;
 };

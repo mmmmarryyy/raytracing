@@ -14,8 +14,6 @@ add_executable(${PROJECT_NAME}
     src/camera/camera.cpp
     src/utils/random.h
     src/utils/random.cpp
-    src/utils/vec.h
-    src/utils/vec.cpp
     src/utils/color.h
     src/utils/color.cpp
     src/utils/parse.h
@@ -32,4 +30,8 @@ add_executable(${PROJECT_NAME}
     src/objects/plane.h
     src/scene/scene.h
     src/scene/scene.cpp
+)
+
+target_include_directories(
+    ${PROJECT_NAME} PUBLIC glm
 )

@@ -1,16 +1,21 @@
 #include "random.h"
 
 std::minstd_rand get_random_generator() {
-    return {std::minstd_rand()};
+    std::random_device rd;
+    return std::minstd_rand(rd());
 }
 
-vec3f get_random_direction(std::minstd_rand rng) {
-    std::uniform_real_distribution<float> height_distribution(-1.0, 1.0), angle_distribution(0, 2 * M_PI);
+glm::vec3 get_random_direction(std::minstd_rand& rng, glm::vec3& normal) {
+    std::uniform_real_distribution<float> random_float_generator(-1.0, 1.0);
 
-    float angle = angle_distribution(rng);
-    float height = height_distribution(rng);
-
-    float projection = std::sqrt(1 - height * height);
-
-    return {projection * std::cos(angle), projection * std::sin(angle), height};
+    for (;;) {
+        glm::vec3 v = {random_float_generator(rng), random_float_generator(rng), random_float_generator(rng)};
+        float norm = glm::dot(v, v);
+        if (norm >= 0 && norm <= 1) {
+            if (glm::dot(normal, v) < 0) {
+                v = -v;
+            }
+            return v / static_cast<float>(std::sqrt(norm));
+        }
+    }
 }

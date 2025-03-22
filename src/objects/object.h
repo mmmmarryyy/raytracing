@@ -1,20 +1,22 @@
 #pragma once
 
-#include "utils/vec.h"
 #include "utils/parse.h"
 #include "utils/object_commands.h"
 #include "ray.h"
 #include "intersection.h"
+#include "gtc/quaternion.hpp"
+#include "glm.hpp"
 
 #include <fstream>
 #include <optional>
 
 class Object {
 public:
-    vec3f position = {0.0, 0.0, 0.0};
-    vec3f color = {0.0, 0.0, 0.0};
-    vec4f rotation = {0.0, 0.0, 0.0, 1.0};
-    vec3f emission = {0.0, 0.0, 0.0};
+    glm::vec3 position = {0.0, 0.0, 0.0};
+    glm::vec3 color = {0.0, 0.0, 0.0};
+    glm::quat rotation = {1.0, 0.0, 0.0, 0.0};
+    glm::quat inversed_rotation = {1.0, 0.0, 0.0, 0.0};
+    glm::vec3 emission = {0.0, 0.0, 0.0};
 
     enum Material {
         Diffuse,
@@ -40,7 +42,8 @@ public:
         if (command == object_commands_names[POSITION]) {
             position = get_vec3f_from_string(line, space_position + 1);
         } else if (command == object_commands_names[ROTATION]) {
-            rotation = get_normal_form(get_vec4f_from_string(line, space_position + 1));
+            rotation = get_vec4f_from_string(line, space_position + 1);
+            inversed_rotation = glm::conjugate(rotation);
         } else if (command == object_commands_names[COLOR]) {
             color = get_vec3f_from_string(line, space_position + 1);
         } else if (command == object_commands_names[METALLIC]) {
@@ -57,4 +60,10 @@ public:
         //     std::cout << "DEBUG: Find unknown command = " << command << " while parsing object" << std::endl;
         // }
     };
+
+protected:
+    void my_rotate(glm::quat q, glm::vec3 &v) {
+        glm::vec3 t = 2.f * glm::cross({q[1], q[2], q[3]}, v);
+        v = v + q[0] * t + cross({q[1], q[2], q[3]}, t);
+    }
 };
