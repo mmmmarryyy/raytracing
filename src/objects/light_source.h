@@ -14,10 +14,10 @@ public:
         Positional
     };
 
-    glm::vec3 intensity = {0.0, 0.0, 0.0};
-    glm::vec3 direction = {0.0, 0.0, 0.0};
-    glm::vec3 position = {0.0, 0.0, 0.0};
-    glm::vec3 attenuation = {0.0, 0.0, 0.0};
+    glm::dvec3 intensity = {0.0, 0.0, 0.0};
+    glm::dvec3 direction = {0.0, 0.0, 0.0};
+    glm::dvec3 position = {0.0, 0.0, 0.0};
+    glm::dvec3 attenuation = {0.0, 0.0, 0.0};
 
     LightType light_type;
 

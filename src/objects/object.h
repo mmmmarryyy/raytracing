@@ -12,11 +12,11 @@
 
 class Object {
 public:
-    glm::vec3 position = {0.0, 0.0, 0.0};
-    glm::vec3 color = {0.0, 0.0, 0.0};
-    glm::quat rotation = {1.0, 0.0, 0.0, 0.0};
-    glm::quat inversed_rotation = {1.0, 0.0, 0.0, 0.0};
-    glm::vec3 emission = {0.0, 0.0, 0.0};
+    glm::dvec3 position = {0.0, 0.0, 0.0};
+    glm::dvec3 color = {0.0, 0.0, 0.0};
+    glm::dquat rotation = {1.0, 0.0, 0.0, 0.0};
+    glm::dquat inversed_rotation = {1.0, 0.0, 0.0, 0.0};
+    glm::dvec3 emission = {0.0, 0.0, 0.0};
 
     enum Material {
         Diffuse,
@@ -25,7 +25,7 @@ public:
     };
 
     Material material = Diffuse;
-    float ior = 1.0;
+    double ior = 1.0;
 
     virtual std::optional<Intersection> is_intersected_by_ray(Ray ray) = 0;
 
@@ -62,8 +62,8 @@ public:
     };
 
 protected:
-    void my_rotate(glm::quat q, glm::vec3 &v) {
-        glm::vec3 t = 2.f * glm::cross({q[1], q[2], q[3]}, v);
+    void my_rotate(glm::dquat q, glm::dvec3 &v) {
+        glm::dvec3 t = 2.0 * glm::cross({q[1], q[2], q[3]}, v);
         v = v + q[0] * t + cross({q[1], q[2], q[3]}, t);
     }
 };

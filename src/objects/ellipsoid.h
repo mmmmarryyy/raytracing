@@ -4,28 +4,28 @@
 
 class Ellipsoid : public Object {
 public:
-    Ellipsoid(glm::vec3 r) : radius(r) {};
+    Ellipsoid(glm::dvec3 r) : radius(r) {};
 
     std::optional<Intersection> is_intersected_by_ray(Ray start_ray) override {
         Ray ray = start_ray.shift_and_rotate_ray(position, inversed_rotation);
         ray.depth = start_ray.depth;
 
-        glm::vec3 o_div_radius = ray.start_position / radius;
-        glm::vec3 direction_div_radius = ray.direction / radius;
+        glm::dvec3 o_div_radius = ray.start_position / radius;
+        glm::dvec3 direction_div_radius = ray.direction / radius;
 
-        float a = glm::dot(direction_div_radius, direction_div_radius);
-        float b = glm::dot(o_div_radius, direction_div_radius);
-        float c = glm:: dot(o_div_radius, o_div_radius) ;
+        double a = glm::dot(direction_div_radius, direction_div_radius);
+        double b = glm::dot(o_div_radius, direction_div_radius);
+        double c = glm::dot(o_div_radius, o_div_radius) ;
 
-        float discriminant = b * b - a * (c - 1.0);
+        double discriminant = b * b - a * (c - 1.0);
         
         if (discriminant < 0.0) {
             return std::nullopt;
         }
 
         discriminant = std::sqrt(discriminant);
-        float t1 = (-b - discriminant) / a;
-        float t2 = (-b + discriminant) / a;
+        double t1 = (-b - discriminant) / a;
+        double t2 = (-b + discriminant) / a;
 
         if (t2 < 0) {
             return std::nullopt;
@@ -44,9 +44,10 @@ public:
             intersection.normal *= -1;
         }
         my_rotate(rotation, intersection.normal);
+        intersection.normal = glm::normalize(intersection.normal);
 
         return std::make_optional(intersection);
     };
 
-    glm::vec3 radius;
+    glm::dvec3 radius;
 };

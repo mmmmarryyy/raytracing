@@ -25,9 +25,14 @@ add_executable(${PROJECT_NAME}
     src/objects/ray.h
     src/objects/box.h
     src/objects/ellipsoid.h
-    src/objects/object.h
     src/objects/light_source.h
     src/objects/plane.h
+    src/light_sampler/light_sampler.h
+    src/light_sampler/parallelepiped_uniform_light_sampler.h
+    src/light_sampler/cosine_light_sampler.h
+    src/light_sampler/ellipsoid_light_sampler.h
+    src/light_sampler/mix_light_sampler.h
+    src/objects/object.h
     src/scene/scene.h
     src/scene/scene.cpp
 )

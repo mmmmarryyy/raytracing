@@ -11,12 +11,12 @@ class Camera {
 public:
     Camera() {}
 
-    Ray cast_in_pixel(glm::vec2 p, glm::vec2 random_offset);
+    Ray cast_in_pixel(glm::dvec2 p, glm::dvec2 random_offset);
 
     size_t width, height;
 
-    glm::vec3 position;
-    glm::vec3 right, up, forward;
+    glm::dvec3 position;
+    glm::dvec3 right, up, forward;
 
-    glm::vec2 fov_in_radians;
+    glm::dvec2 fov_in_radians;
 };

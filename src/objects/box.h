@@ -4,14 +4,14 @@
 
 class Box : public Object {
 public:
-    Box(glm::vec3 s): size(s) {};
+    Box(glm::dvec3 s): size(s) {};
 
     std::optional<Intersection> is_intersected_by_ray(Ray start_ray) override {
         Ray ray = start_ray.shift_and_rotate_ray(position, inversed_rotation);
         ray.depth = start_ray.depth;
         
-        glm::vec3 t1 = (-size - ray.start_position) / ray.direction;
-        glm::vec3 t2 = (size - ray.start_position) / ray.direction;
+        glm::dvec3 t1 = (-size - ray.start_position) / ray.direction;
+        glm::dvec3 t2 = (size - ray.start_position) / ray.direction;
         
         if (t1.x > t2.x) {
             std::swap(t1.x, t2.x);
@@ -23,8 +23,8 @@ public:
             std::swap(t1.z, t2.z);
         }
 
-        float t1_max = std::max(std::max(t1.x, t1.y), t1.z);
-        float t2_min = std::min(std::min(t2.x, t2.y), t2.z);
+        double t1_max = std::max(std::max(t1.x, t1.y), t1.z);
+        double t2_min = std::min(std::min(t2.x, t2.y), t2.z);
 
         if (t1_max > t2_min || t2_min < 0) {
             return std::nullopt;
@@ -36,10 +36,10 @@ public:
             intersection.distance = t2_min;
         }
 
-        glm::vec3 intersection_normal = (ray.start_position + intersection.distance * ray.direction) / size;
+        glm::dvec3 intersection_normal = (ray.start_position + intersection.distance * ray.direction) / size;
         
         for (std::size_t i = 0; i < 3; i++) {
-            if (std::abs(std::abs(intersection_normal[i]) - 1.0) < 1e-5) {
+            if (std::abs(std::abs(intersection_normal[i]) - 1.0) < 1e-6) {
                 intersection_normal[i] = (intersection_normal[i] > 0.0) ? 1.0 : -1.0;
             } else {
                 intersection_normal[i] = 0;
@@ -52,9 +52,9 @@ public:
         }
 
         my_rotate(rotation, intersection_normal);
-        intersection.normal = intersection_normal;
+        intersection.normal = glm::normalize(intersection_normal);
         return std::make_optional(intersection);
     };
 
-    glm::vec3 size;
+    glm::dvec3 size;
 };
