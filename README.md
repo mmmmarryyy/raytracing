@@ -21,3 +21,5 @@ Return image in NetPBM P6 format. Examples:
 ![image](./examples/example_output.png)
 
 ![image](./examples/example_output_2.png)
+
+![image](./examples/example_output_3.png)
